@@ -6,17 +6,69 @@ import httpStatus from "http-status-codes";
 
 
 
-const createTourist = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-    const user = await UserServices.createTourist(req.body, req.file);
+const createDriver = async (req: Request,res: Response,next: NextFunction) => {
+  try {
+    const result = await UserServices.createDriver(req.body);
 
     sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.CREATED,
-        message: "User Created Successfully",
-        data: user
-    })
-})
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "User registered successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = req.body;
+    await UserServices.forgotPassword(email);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "OTP sent to your email",
+      data: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyOtp = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, otp } = req.body;
+    const result = await UserServices.verifyOtp(email, otp);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "OTP verified successfully",
+      data: result, // could return a temporary token for password reset
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, password } = req.body;
+    await UserServices.resetPassword(email, password);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,    
+      message: "Password reset successfully",
+      data: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const createAdmin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
     const user = await UserServices.createadmin(req.body, req.file);
@@ -28,19 +80,6 @@ const createAdmin = catchAsync(async (req: Request, res: Response, next: NextFun
         data: user
     })
 })
-
-const createGuide = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-    const user = await UserServices.createguide(req.body, req.file);
-
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.CREATED,
-        message: "User Created Successfully",
-        data: user
-    })
-})
-
 
 const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     // Extract filter parameters from query
@@ -83,77 +122,48 @@ const deleteUser = catchAsync(async (req: Request, res: Response, next: NextFunc
     });
 });
 
-const addToWishlist = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { userId } = req.params;
-    const { tourId } = req.body;
-    if (!tourId) {
-        return sendResponse(res, {
-            success: false,
-            statusCode: httpStatus.BAD_REQUEST,
-            message: 'Tour ID is required',
-            data: null,
-        });
-    }
-    const user = await UserServices.addToWishlist(userId as string, tourId);
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: 'Tour added to wishlist',
-        data: user,
-    });
-});
 
-const removeFromWishlist = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { userId } = req.params;
-    const { tourId } = req.body;
-    if (!tourId) {
-        return sendResponse(res, {
-            success: false,
-            statusCode: httpStatus.BAD_REQUEST,
-            message: 'Tour ID is required',
-            data: null,
-        });
-    }
-    const user = await UserServices.removeFromWishlist(userId as string, tourId);
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: 'Tour removed from wishlist',
-        data: user,
-    });
-});
 
-const getWishlist = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { userId } = req.params;
-    const wishlist = await UserServices.getWishlist(userId as string);
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: 'Wishlist retrieved',
-        data: wishlist,
-    });
+const updateUser = catchAsync(async (req: Request, res: Response) => {
+
+  const id = req.user.userId;
+
+  let payload = {};
+
+  // 1️⃣ Parse JSON data if exists
+  if (req.body.data) {
+    payload = JSON.parse(req.body.data);
+  } else {
+    payload = req.body;
+  }
+
+  const file = req.file;
+
+  const result = await UserServices.updateUser(
+    id as string,
+    payload,
+    file
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User updated successfully",
+    data: result,
+  });
 });
-const Updatuser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    const result = await UserServices.updateUser(id as string, req.body);
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.CREATED,
-        message: "Updated user Successfully",
-        data: result
-    })
-})
 
 export const UserControllers = {
     getAllUsers,
-    createTourist,
+    createDriver,
     createAdmin,
-    createGuide,
-    Updatuser,
+    updateUser,
     getUserById,
     deleteUser,
-    addToWishlist,
-    removeFromWishlist,
-    getWishlist,
+    forgotPassword,
+    verifyOtp,
+    resetPassword
+  
+
    
 }

@@ -1,35 +1,86 @@
 import AppError from "../../errorHelpers/AppError";
-import { IUser } from "./user.interface";
+import { IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import httpStatus from "http-status-codes"
 import bcrypt from "bcrypt";
 import { envVars } from "../../config/env";
 import { fileUploader } from "../../helpers/fileUpload";
+import { generateOtp, verifytheOtp } from "../../utils/otp.util";
+import { sendOtpEmail } from "../../utils/email.util";
+import { redisClient } from "../../config/redis.config";
 
-const createTourist = async (payload: Partial<IUser>, file?: Express.Multer.File) => {
-    const { email, password, ...rest } = payload;
+const OTP_EXPIRE = 3 * 60;
 
-    const isUserExist = await User.findOne({ email });
-    if (isUserExist) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User already Exist")
-    }
+const createDriver = async (payload: Partial<IUser>) => {
+  const { email, password, ...rest } = payload;
 
-    let profilePicture: string | undefined;
-    if (file) {
-        const uploadResult = await fileUploader.uploadToCloudinary(file);
-        profilePicture = uploadResult?.secure_url;
-    }
+  if (!email || !password) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Email and password are required");
+  }
 
-    const hashedPassword = await bcrypt.hash(password as string, Number(envVars.BCRYPT_SALT_ROUND))
-    const user = await User.create({
-        email,
-        role: 'TOURIST',
-        password: hashedPassword,
-        picture: profilePicture,
-        ...rest
-    })
-    return user;
-}
+  const isUserExist = await User.findOne({ email });
+
+  if (isUserExist) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User already exists");
+  }
+
+  const hashedPassword = await bcrypt.hash(
+    password,
+    Number(envVars.BCRYPT_SALT_ROUND)
+  );
+
+  const user = await User.create({
+    email,
+    password: hashedPassword,
+    role: Role.DRIVER,
+    ...rest,
+  });
+
+  return user;
+};
+
+
+const forgotPassword = async (email: string) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
+
+  const otp = generateOtp(6);
+  await redisClient.setex(`otp:email:${email}`, OTP_EXPIRE, otp);
+  await sendOtpEmail({ to: email, otp });
+
+  return null;
+};
+
+// Step 2: Verify OTP
+const verifyOtp = async (email: string, otp: string) => {
+  const storedOtp = await redisClient.get(`otp:email:${email}`);
+  if (!storedOtp || !verifytheOtp(otp, storedOtp)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid or expired OTP");
+  }
+
+  // Optional: Return a temporary flag/token to allow password reset
+  // Here, we just delete OTP after verification
+  await redisClient.del(`otp:email:${email}`);
+  await redisClient.setex(`otp-verified:${email}`, 300, "true");
+  return true;
+};
+
+// Step 3: Reset Password
+const resetPassword = async (email: string, password: string) => {
+    const verified = await redisClient.get(`otp-verified:${email}`);
+    if (!verified) throw new AppError(400, "OTP not verified");
+    await redisClient.del(`otp-verified:${email}`);
+  const hashedPassword = await bcrypt.hash(password, Number(envVars.BCRYPT_SALT_ROUND));
+  const user = await User.findOneAndUpdate(
+    { email },
+    { password: hashedPassword },
+    { new: true }
+  );
+
+  if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  return null;
+};
+
 const createadmin = async (payload: Partial<IUser>, file?: Express.Multer.File) => {
     const { email, password, ...rest } = payload;
 
@@ -54,31 +105,25 @@ const createadmin = async (payload: Partial<IUser>, file?: Express.Multer.File) 
     })
     return user;
 }
-const createguide = async (payload: Partial<IUser>, file?: Express.Multer.File) => {
-    const { email, password, ...rest } = payload;
 
-    const isUserExist = await User.findOne({ email });
-    if (isUserExist) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User already Exist")
-    }
 
+const updateUser = async (id: string, payload: Partial<IUser>, file?: Express.Multer.File) => {
     let profilePicture: string | undefined;
+
     if (file) {
         const uploadResult = await fileUploader.uploadToCloudinary(file);
         profilePicture = uploadResult?.secure_url;
+        payload.picture = profilePicture;
     }
 
-    const hashedPassword = await bcrypt.hash(password as string, Number(envVars.BCRYPT_SALT_ROUND))
-    const user = await User.create({
-        email,
-        role: 'GUIDE',
-        password: hashedPassword,
-        picture: profilePicture,
-        ...rest
-    })
-    return user;
-}
+    const updatedUser = await User.findByIdAndUpdate(id, payload, { new: true });
 
+    if (!updatedUser) {
+        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+    }
+
+    return updatedUser;
+};
 
 interface UserFilters {
     role?: string;
@@ -125,17 +170,6 @@ const getAllUsers = async (filters?: UserFilters) => {
     };
 };
 
-const updateUser = async (id: string, payload: Partial<IUser>) => {
-    const updatedUserr = await User.findByIdAndUpdate(id, payload, { new: true });
-
-
-    if (!updatedUserr) {
-        throw new Error('User not found');
-    }
-
-    return updatedUserr
-};
-
 const getUserById = async (id: string) => {
     const user = await User.findById(id);
     if (!user) {
@@ -168,48 +202,19 @@ const unblockUser = async (id: string) => {
     return user;
 };
 
-const addToWishlist = async (userId: string, tourId: string) => {
-    const user = await User.findByIdAndUpdate(
-        userId,
-        { $addToSet: { wishlist: tourId } },
-        { new: true }
-    ).populate('wishlist');
-    if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
-    }
-    return user;
-};
-
-const removeFromWishlist = async (userId: string, tourId: string) => {
-    const user = await User.findByIdAndUpdate(
-        userId,
-        { $pull: { wishlist: tourId } },
-        { new: true }
-    ).populate('wishlist');
-    if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
-    }
-    return user;
-};
-
-const getWishlist = async (userId: string) => {
-    const user = await User.findById(userId).populate('wishlist');
-    if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
-    }
-    return user.wishlist || [];
-};
 
 export const UserServices = {
     getAllUsers,
 
-    createTourist,
+    createDriver,
     createadmin,
-    createguide,
     updateUser,
     getUserById,
     deleteUser,
-    addToWishlist,
-    removeFromWishlist,
-    getWishlist
+    blockUser,
+    unblockUser,
+    forgotPassword,
+    verifyOtp,
+    resetPassword
+
 }

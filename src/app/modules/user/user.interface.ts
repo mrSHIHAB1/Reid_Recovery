@@ -2,8 +2,7 @@ import { Types } from "mongoose";
 
 export enum Role{
    ADMIN="ADMIN",
-   TOURIST="TOURIST",
-  GUIDE="GUIDE",
+   DRIVER="DRIVER",
 
 }
 
@@ -22,13 +21,7 @@ export interface IUser {
     phone: string;
     picture?: string;
     address?: string;
-    bio?: string;
-    expertise?:string[];
-    dailyrate?:number;
-    travelpreferences?:string[];
-    spokenLanguages?:string[];
-    wishlist?: Types.ObjectId[];
-    isDeleted?: string;
+    isDeleted?: boolean;
     isActive?: IsActive;
     isVerified?: boolean;
     isblocked?:boolean;

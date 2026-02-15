@@ -11,8 +11,6 @@ const UserSchema: Schema<IUser> = new Schema(
     phone: { type: String, required: true },
     picture: { type: String },
     address: { type: String },
-    bio: { type: String },
-    wishlist: { type: [Schema.Types.ObjectId], ref: 'Tour', default: [] },
     isDeleted: { type: Boolean, default: false },
     isActive: {
       type: String,
@@ -21,15 +19,11 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     isVerified: { type: Boolean, default: false },
     isblocked: { type: Boolean, default: false },
-    expertise: { type: [String] },
-    dailyrate: { type: Number },
-    travelpreferences: { type: [String] },
-    spokenLanguages: { type: [String] },
     role: {
       type: String,
       enum: Object.values(Role),
       required: true,
-      default: Role.TOURIST,
+      default: Role.DRIVER,
     },
   },
   {

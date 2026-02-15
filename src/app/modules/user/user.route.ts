@@ -2,54 +2,50 @@ import express, { NextFunction, Request, Response } from "express"
 import { UserControllers } from "./user.controller";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "./user.interface";
-import { validateRequest } from "../../middlewares/validateRequest";
-import { createAdminZodSchema,createGuideZodSchema,createTouristZodSchema, updateZodSchema, userValidation} from "./user.validation";
+
 import { fileUploader } from "../../helpers/fileUpload";
 
-const router =express.Router();
+const router = express.Router();
+
+router.post("/register", UserControllers.createDriver);
+
+router.post("/register/admin",
+  fileUploader.upload.single('file'), checkAuth(Role.ADMIN),
+  (req: Request, res: Response, next: NextFunction) => {
+    return UserControllers.createAdmin(req, res, next);
+  });
 
 router.post(
-  "/register/tourist",
-  fileUploader.upload.single('file'),
+  "/register/user",
   (req: Request, res: Response, next: NextFunction) => {
-
-    req.body = userValidation.createTouristZodSchema.parse(
-      JSON.parse(req.body.data)
-    );
-
-    return UserControllers.createTourist(req, res, next);
+    return UserControllers.createUserWithoutPhoto(req, res, next);
   }
 );
 
-router.post("/register/admin",
-   fileUploader.upload.single('file'),checkAuth(Role.ADMIN),
-(req: Request, res: Response, next: NextFunction) => {
-  req.body = userValidation.createAdminZodSchema.parse(
-      JSON.parse(req.body.data)
-    );
-    return UserControllers.createAdmin(req, res, next);
-} );
+// Step 1: User enters email → send OTP
+router.post("/forgot-password", UserControllers.forgotPassword);
 
-    
-  
-router.post("/register/guide",fileUploader.upload.single('file'), 
-(req: Request, res: Response, next: NextFunction)=> {
-   req.body=userValidation.createGuideZodSchema.parse(
-      JSON.parse(req.body.data)
-    ); 
-    return UserControllers.createGuide(req, res, next)
+// Step 2: Verify OTP
+router.post("/verify-otp", UserControllers.verifyOtp);
 
-})
+// Step 3: Reset password
+router.post("/reset-password", UserControllers.resetPassword);
+
 router.get("/all-users", UserControllers.getAllUsers)
-router.get('/:id',  UserControllers.getUserById)
-router.delete('/:id',  UserControllers.deleteUser)
-router.patch("/updateUsers/:id",validateRequest(updateZodSchema),UserControllers.Updatuser)
+router.get('/:id', UserControllers.getUserById)
+router.delete('/:id', UserControllers.deleteUser)
 
-// Wishlist routes
-router.post('/:userId/wishlist/add', UserControllers.addToWishlist)
-router.delete('/:userId/wishlist/remove', UserControllers.removeFromWishlist)
-router.get('/:userId/wishlist', UserControllers.getWishlist)
+router.patch(
+  "/updateUsers",
+  fileUploader.upload.single('file'),
+  checkAuth(Role.DRIVER),
+  (req: Request, res: Response, next: NextFunction) => {
+    return UserControllers.updateUser(req, res, next);
+  }
+);
 
 
 
-export const UserRoutes=router;
+
+
+export const UserRoutes = router;

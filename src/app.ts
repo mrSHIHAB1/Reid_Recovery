@@ -7,14 +7,19 @@ import expressSession from "express-session";
 import { globalErrorHandler } from './app/middlewares/globalErrorHandler';
 import notFound from './app/middlewares/notFound';
 import router from './app/routes';
-
+import { RedisStore } from "connect-redis";
+import { redisClient } from './app/config/redis.config';
 const app=express();
 
-app.use(expressSession({
-    secret: envVars.EXPRESS_SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false
-}))
+app.use(
+    expressSession({
+        store: new RedisStore({ client: redisClient }),
+        secret: envVars.EXPRESS_SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+    })
+);
+
 
 app.use(cookieParser())
 app.use(express.json())
