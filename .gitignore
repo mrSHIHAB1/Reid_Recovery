@@ -6,3 +6,7 @@ dist/
 uploads/*
 !uploads/.gitkeep
 *.log
+firebase-service-account.json
+reid-30473-129c6dc3a496.json
+# Ignore sensitive files
+reid-30473-129c6dc3a496.json

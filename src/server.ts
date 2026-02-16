@@ -1,24 +1,41 @@
 import mongoose from "mongoose";
-import app from "./app"
-import { Server } from "http"
+import http from "http";
+import app from "./app";
 import { envVars } from "./app/config/env";
 import { connectRedis } from "./app/config/redis.config";
-let server:Server;
+import { setIo } from "./app/modules/socket/socket.store";
+import { initSockets } from "./app/modules/socket/socket";
+import { Server as SocketIoServer } from "socket.io";
 
-const startServer=async()=>{
-    try{
-       await connectRedis();
-      await mongoose.connect(envVars.DB_URL);
-      console.log("connected to Database");
-      server=app.listen(envVars.PORT,()=>{
-        console.log(`server is listening to port ${envVars.PORT}`)
-      })
-    }
-    catch(error){
-        console.log(error)
-    }
-}
+let server: http.Server;
 
-(async()=>{
-    await startServer();
-})()
+server = http.createServer(app);
+
+const io = new SocketIoServer(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    credentials: true,
+  },
+});
+
+setIo(io);
+initSockets(io);
+
+const startServer = async () => {
+  try {
+    await connectRedis();
+    await mongoose.connect(envVars.DB_URL);
+    console.log("Connected to Database");
+
+    server.listen(envVars.PORT, () => {
+      console.log(`Server is listening on port ${envVars.PORT}`);
+    });
+
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+(async () => {
+  await startServer();
+})();

@@ -1,13 +1,15 @@
 import { Truck, ITruck } from "./truck.model";
 import AppError from "../../errorHelpers/AppError";
 import httpStatus from "http-status-codes";
+import { extractTextFromImageBuffer } from "../../utils/vision";
+import { parseTruckFromOcrText } from "./truck.parser";
 const TRUCK_IMAGES = [
   "https://drive.google.com/uc?export=view&id=1UoqoKpRa3bogs88HB3rIl0BmfdVoUT8g",
   "https://drive.google.com/uc?export=view&id=1mXXhw9MrqFMIgRGAuLft6EEotaXsOLV1",
   "https://drive.google.com/uc?export=view&id=1PHuXzzPKglJRBeVXurxlpC-d2kqxKNYn"
 ];
 
-const createTruck = async (payload: ITruck) => {
+const createTruck = async (payload: ITruck,driverId: string) => {
  const { ticket, date: dateString, truckNo, yardage } = payload;
 
     // Convert frontend date string to JS Date
@@ -22,7 +24,8 @@ const createTruck = async (payload: ITruck) => {
       date: parsedDate,
       truckNo,
       yardage,
-      photo
+      photo,
+      driver: driverId
     });
 
     return truck;
@@ -62,11 +65,31 @@ const deleteTruck = async (id: string) => {
 
   return truck;
 };
+const createTruckFromImage = async (file: Express.Multer.File) => {
+  if (!file?.buffer) {
+    throw new Error("Image file is required");
+  }
 
+  const ocrText = await extractTextFromImageBuffer(file.buffer);
+
+  const parsed = parseTruckFromOcrText(ocrText);
+
+  // If you want to store the photo, you should upload it to S3/Cloudinary.
+  // For now, you can keep your random photo logic or store placeholder:
+  const photo = undefined;
+
+  const truck = await Truck.create({
+    ...parsed,
+    photo,
+  });
+
+  return { truck, ocrText, parsed };
+};
 export const TruckService = {
   createTruck,
   updateTruck,
   getTruck,
   getAllTrucks,
   deleteTruck,
+  createTruckFromImage
 };

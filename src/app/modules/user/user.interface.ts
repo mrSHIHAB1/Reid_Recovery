@@ -26,6 +26,8 @@ export interface IUser {
     isVerified?: boolean;
     isblocked?:boolean;
     role: Role;
+    fcmToken?: string;
+  fcmTokens?: string[];
     createdAt?: Date;
     updatedAt?: Date;
 }

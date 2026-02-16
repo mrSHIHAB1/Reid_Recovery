@@ -3,6 +3,7 @@ import { UserRoutes } from '../modules/user/user.route';
 import { AuthRoutes } from '../modules/auth/auth.routes';
 import { TruckRoutes } from '../modules/Truck/truck.route';
 import { ServicesRoutes } from '../modules/services/services.route';
+import { notificationRoutes } from '../modules/notification/notification.router';
 
 
 const router = express.Router();
@@ -24,6 +25,10 @@ const moduleRoutes = [
     },{
         path: '/services',
         route:ServicesRoutes
+    },
+    {
+        path: '/notifications',
+        route:notificationRoutes
     }
     
 ];

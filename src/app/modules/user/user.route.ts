@@ -15,12 +15,7 @@ router.post("/register/admin",
     return UserControllers.createAdmin(req, res, next);
   });
 
-router.post(
-  "/register/user",
-  (req: Request, res: Response, next: NextFunction) => {
-    return UserControllers.createUserWithoutPhoto(req, res, next);
-  }
-);
+
 
 // Step 1: User enters email → send OTP
 router.post("/forgot-password", UserControllers.forgotPassword);

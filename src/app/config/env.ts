@@ -38,6 +38,9 @@ interface EnvConfig {
   SMTP_PASS?: string;
   SMTP_HOST?: string;
   SMTP_HOST_PORT?: string;
+  FIREBASE_SERVICE_ACCOUNT_PATH: string;
+  GOOGLE_APPLICATION_CREDENTIALS: string;
+  GOOGLE_CLOUD_VISSION_API_KEY:string;
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -56,7 +59,10 @@ const loadEnvVariables = (): EnvConfig => {
     "SMTP_USER",
     "SMTP_PASS",
     "SMTP_HOST",
-    "SMTP_HOST_PORT"
+    "SMTP_HOST_PORT",
+    "FIREBASE_SERVICE_ACCOUNT_PATH",
+    "GOOGLE_APPLICATION_CREDENTIALS",
+    "GOOGLE_CLOUD_VISSION_API_KEY"
   ];
 
   requiredEnvVariables.forEach((key) => {
@@ -101,6 +107,9 @@ const loadEnvVariables = (): EnvConfig => {
     SMTP_PASS: process.env.SMTP_PASS,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_HOST_PORT: process.env.SMTP_HOST_PORT,
+    FIREBASE_SERVICE_ACCOUNT_PATH: process.env.FIREBASE_SERVICE_ACCOUNT_PATH as string,
+    GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS as string,
+    GOOGLE_CLOUD_VISSION_API_KEY: process .env.GOOGLE_CLOUD_VISSION_API_KEY as string,
   };
 };
 

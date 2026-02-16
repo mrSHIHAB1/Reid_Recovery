@@ -6,6 +6,7 @@ interface ITruck {
   truckNo: string;
   photo?: string;
   yardage: number;
+  driver: Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -17,6 +18,7 @@ const TruckSchema: Schema<ITruck> = new Schema(
     truckNo: { type: String, required: true },
     yardage: { type: Number, required: true },
      photo: { type: String },
+     driver: { type: mongoose.Schema.Types.ObjectId,ref: "User", required: true},
   },
   {
     timestamps: true, // automatically adds createdAt and updatedAt

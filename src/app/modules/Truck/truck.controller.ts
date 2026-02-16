@@ -5,8 +5,9 @@ import { catchAsync } from "../../utils/catchAsync";
 import httpStatus from "http-status-codes";
 
 const createTruck = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const truck = await TruckService.createTruck(req.body);
-
+  const userId = req.user._id; 
+  console.log("Creating truck for user:", userId);
+  const truck = await TruckService.createTruck(req.body,userId);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
@@ -61,11 +62,26 @@ const deleteTruck = catchAsync(async (req: Request, res: Response, next: NextFun
     data: deletedTruck,
   });
 });
+const createTruckFromImage = catchAsync(async (req: Request, res: Response) => {
+  const result = await TruckService.createTruckFromImage(req.file as any);
 
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: "Truck created from image successfully",
+    data: result.truck,
+    meta: {
+      parsed: result.parsed,
+      // remove ocrText in production if you want
+      ocrText: result.ocrText,
+    },
+  });
+});
 export const TruckController = {
   createTruck,
   updateTruck,
   getTruck,
   getAllTrucks,
   deleteTruck,
+  createTruckFromImage
 };

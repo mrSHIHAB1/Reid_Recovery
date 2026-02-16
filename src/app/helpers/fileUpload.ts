@@ -16,6 +16,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Added memory storage for in-memory file uploads
+const memoryStorage = multer.memoryStorage();
+const memoryUpload = multer({ storage: memoryStorage });
+
 // Cloudinary config function
 const cloudinaryConfig = () => {
   cloudinary.config({
@@ -72,6 +76,7 @@ const uploadMultipleToCloudinary = async (files: Express.Multer.File[]) => {
 
 export const fileUploader = {
   upload,
+  memoryUpload, // Added memory upload for in-memory file handling
   uploadToCloudinary,
   deleteFromCloudinary,
   uploadMultipleToCloudinary,

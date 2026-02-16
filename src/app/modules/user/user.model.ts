@@ -25,6 +25,10 @@ const UserSchema: Schema<IUser> = new Schema(
       required: true,
       default: Role.DRIVER,
     },
+    fcmTokens: {
+  type: [String],
+  default: [],
+}
   },
   {
     timestamps: true, // automatically adds createdAt and updatedAt
