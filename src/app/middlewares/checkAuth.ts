@@ -3,7 +3,7 @@ import AppError from "../errorHelpers/AppError";
 import { verifyToken } from "../utils/jwt";
 import { envVars } from "../config/env";
 import { JwtPayload } from "jsonwebtoken";
-import httpStatus from "http-status-codes"
+import httpStatus from "http-status-codes";
 import { User } from "../modules/user/user.model";
 import { IsActive } from "../modules/user/user.interface";
 
@@ -37,41 +37,44 @@ export const checkAuth =
         envVars.JWT_ACCESS_SECRET
       ) as JwtPayload;
 
-      // 5️⃣ Check User
-      const isUserExist = await User.findOne({
+      // 5️⃣ Check User in DB
+      const user = await User.findOne({
         email: verifiedToken.email,
       });
 
-      if (!isUserExist) {
+      if (!user) {
         throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
       }
 
       if (
-        isUserExist.isActive === IsActive.BLOCKED ||
-        isUserExist.isActive === IsActive.INACTIVE
+        user.isActive === IsActive.BLOCKED ||
+        user.isActive === IsActive.INACTIVE
       ) {
-        throw new AppError(
-          httpStatus.BAD_REQUEST,
-          `User is ${isUserExist.isActive}`
-        );
+        throw new AppError(httpStatus.BAD_REQUEST, `User is ${user.isActive}`);
       }
 
-      if (isUserExist.isDeleted) {
-        throw new AppError(
-          httpStatus.BAD_REQUEST,
-          "User is deleted"
-        );
+      if (user.isDeleted) {
+        throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
       }
 
       // 6️⃣ Role Check
-      if (authRoles.length && !authRoles.includes(verifiedToken.role)) {
+      if (authRoles.length && !authRoles.includes(user.role)) {
         throw new AppError(
           403,
           "You are not permitted to view this route!!!"
         );
       }
 
-      req.user = verifiedToken;
+      // 7️⃣ Attach full user data to req.user
+      req.user = {
+        id: user._id,
+        email: user.email || "",
+        role: user.role,
+        firstName: user.name || "",
+        isActive: user.isActive,
+  
+      };
+
       next();
     } catch (error: any) {
       if (error.name === "TokenExpiredError") {

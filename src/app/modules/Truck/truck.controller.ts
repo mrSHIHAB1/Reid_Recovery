@@ -5,7 +5,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import httpStatus from "http-status-codes";
 
 const createTruck = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.user._id; 
+  const userId = req.user.id; 
   console.log("Creating truck for user:", userId);
   const truck = await TruckService.createTruck(req.body,userId);
   sendResponse(res, {

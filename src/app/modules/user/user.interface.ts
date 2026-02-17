@@ -28,6 +28,7 @@ export interface IUser {
     role: Role;
     fcmToken?: string;
   fcmTokens?: string[];
+  reciveNotifications?: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }
