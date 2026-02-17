@@ -4,6 +4,7 @@ import { AuthRoutes } from '../modules/auth/auth.routes';
 import { TruckRoutes } from '../modules/Truck/truck.route';
 import { ServicesRoutes } from '../modules/services/services.route';
 import { notificationRoutes } from '../modules/notification/notification.router';
+import { DashboardRoutes } from '../modules/Dashboard/dashboard.route';
 
 
 const router = express.Router();
@@ -29,6 +30,10 @@ const moduleRoutes = [
     {
         path: '/notifications',
         route:notificationRoutes
+    },
+    {
+        path: '/dashboard',
+        route:DashboardRoutes
     }
     
 ];
