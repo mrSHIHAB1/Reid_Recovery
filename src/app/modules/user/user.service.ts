@@ -44,11 +44,11 @@ const forgotPassword = async (email: string) => {
   const user = await User.findOne({ email });
   if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
 
-  const otp = generateOtp(6);
+  const otp = generateOtp(5);
   await redisClient.setex(`otp:email:${email}`, OTP_EXPIRE, otp);
   await sendOtpEmail({ to: email, otp });
 
-  return null;
+  return otp;
 };
 
 // Step 2: Verify OTP

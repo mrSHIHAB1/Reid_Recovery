@@ -24,13 +24,13 @@ const createDriver = async (req: Request,res: Response,next: NextFunction) => {
 const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email } = req.body;
-    await UserServices.forgotPassword(email);
+  const data=  await UserServices.forgotPassword(email);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
       message: "OTP sent to your email",
-      data: null,
+      data: data,
     });
   } catch (error) {
     next(error);
