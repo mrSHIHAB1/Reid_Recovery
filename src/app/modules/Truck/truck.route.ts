@@ -9,11 +9,13 @@ const router = express.Router();
 router.post("/create",checkAuth(Role.DRIVER), TruckController.createTruck);
 router.patch("/update/:id", TruckController.updateTruck);
 router.get("/:id", TruckController.getTruck);
-router.get("/", TruckController.getAllTrucks);
+router.get("/", TruckController.getAllTrucks); // Updated to support filtering and pagination
 router.delete("/:id", TruckController.deleteTruck);
-router.post(
-  "/create-from-image",
-  fileUploader.memoryUpload.single("image"),
-  TruckController.createTruckFromImage,
-);
+// router.post(
+//   "/create-from-image",
+//   fileUploader.memoryUpload.single("image"),
+//   TruckController.createTruckFromImage,
+// );
+router.get("/my-tickets", checkAuth(Role.DRIVER), TruckController.getMyTickets);
+
 export const TruckRoutes = router;

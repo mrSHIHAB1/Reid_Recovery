@@ -39,6 +39,14 @@ router.patch(
   }
 );
 
+router.patch(
+  "/:id",
+  fileUploader.upload.single('file'),
+  (req: Request, res: Response, next: NextFunction) => {
+    return UserControllers.updateUserById(req, res, next);
+  }
+);
+
 
 
 

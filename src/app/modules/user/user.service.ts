@@ -8,61 +8,62 @@ import { fileUploader } from "../../helpers/fileUpload";
 import { generateOtp, verifytheOtp } from "../../utils/otp.util";
 import { sendOtpEmail } from "../../utils/email.util";
 import { redisClient } from "../../config/redis.config";
+import { Truck } from "../Truck/truck.model";
 
 const OTP_EXPIRE = 3 * 60;
 
 const createDriver = async (payload: Partial<IUser>) => {
-  const { email, password, ...rest } = payload;
+    const { email, password, ...rest } = payload;
 
-  if (!email || !password) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Email and password are required");
-  }
+    if (!email || !password) {
+        throw new AppError(httpStatus.BAD_REQUEST, "Email and password are required");
+    }
 
-  const isUserExist = await User.findOne({ email });
+    const isUserExist = await User.findOne({ email });
 
-  if (isUserExist) {
-    throw new AppError(httpStatus.BAD_REQUEST, "User already exists");
-  }
+    if (isUserExist) {
+        throw new AppError(httpStatus.BAD_REQUEST, "User already exists");
+    }
 
-  const hashedPassword = await bcrypt.hash(
-    password,
-    Number(envVars.BCRYPT_SALT_ROUND)
-  );
+    const hashedPassword = await bcrypt.hash(
+        password,
+        Number(envVars.BCRYPT_SALT_ROUND)
+    );
 
-  const user = await User.create({
-    email,
-    password: hashedPassword,
-    role: Role.DRIVER,
-    ...rest,
-  });
+    const user = await User.create({
+        email,
+        password: hashedPassword,
+        role: Role.DRIVER,
+        ...rest,
+    });
 
-  return user;
+    return user;
 };
 
 
 const forgotPassword = async (email: string) => {
-  const user = await User.findOne({ email });
-  if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    const user = await User.findOne({ email });
+    if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
 
-  const otp = generateOtp(5);
-  await redisClient.setex(`otp:email:${email}`, OTP_EXPIRE, otp);
-  await sendOtpEmail({ to: email, otp });
+    const otp = generateOtp(5);
+    await redisClient.setex(`otp:email:${email}`, OTP_EXPIRE, otp);
+    await sendOtpEmail({ to: email, otp });
 
-  return otp;
+    return otp;
 };
 
 // Step 2: Verify OTP
 const verifyOtp = async (email: string, otp: string) => {
-  const storedOtp = await redisClient.get(`otp:email:${email}`);
-  if (!storedOtp || !verifytheOtp(otp, storedOtp)) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Invalid or expired OTP");
-  }
+    const storedOtp = await redisClient.get(`otp:email:${email}`);
+    if (!storedOtp || !verifytheOtp(otp, storedOtp)) {
+        throw new AppError(httpStatus.BAD_REQUEST, "Invalid or expired OTP");
+    }
 
-  // Optional: Return a temporary flag/token to allow password reset
-  // Here, we just delete OTP after verification
-  await redisClient.del(`otp:email:${email}`);
-  await redisClient.setex(`otp-verified:${email}`, 300, "true");
-  return true;
+    // Optional: Return a temporary flag/token to allow password reset
+    // Here, we just delete OTP after verification
+    await redisClient.del(`otp:email:${email}`);
+    await redisClient.setex(`otp-verified:${email}`, 300, "true");
+    return true;
 };
 
 // Step 3: Reset Password
@@ -70,15 +71,15 @@ const resetPassword = async (email: string, password: string) => {
     const verified = await redisClient.get(`otp-verified:${email}`);
     if (!verified) throw new AppError(400, "OTP not verified");
     await redisClient.del(`otp-verified:${email}`);
-  const hashedPassword = await bcrypt.hash(password, Number(envVars.BCRYPT_SALT_ROUND));
-  const user = await User.findOneAndUpdate(
-    { email },
-    { password: hashedPassword },
-    { new: true }
-  );
+    const hashedPassword = await bcrypt.hash(password, Number(envVars.BCRYPT_SALT_ROUND));
+    const user = await User.findOneAndUpdate(
+        { email },
+        { password: hashedPassword },
+        { new: true }
+    );
 
-  if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
-  return null;
+    if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    return null;
 };
 
 const createadmin = async (payload: Partial<IUser>, file?: Express.Multer.File) => {
@@ -159,11 +160,32 @@ const getAllUsers = async (filters?: UserFilters) => {
         ];
     }
 
-    const users = await User.find(query);
+    const users = await User.find(query).lean();
     const totalUsers = await User.countDocuments(query);
 
+    // Get the user IDs to filter trucks
+    const userIds = users.map(user => user._id);
+
+    // Aggregate to count trucks (tickets) per driver
+    const ticketCounts = await Truck.aggregate([
+        { $match: { driver: { $in: userIds } } },
+        { $group: { _id: "$driver", count: { $sum: 1 } } }
+    ]);
+
+    // Create a map for quick lookup: { userId: count }
+    const ticketCountMap = ticketCounts.reduce((acc, curr) => {
+        acc[curr._id.toString()] = curr.count;
+        return acc;
+    }, {} as Record<string, number>);
+
+    // Merge ticket count into user objects
+    const data = users.map(user => ({
+        ...user,
+        totalTickets: ticketCountMap[user._id.toString()] || 0
+    }));
+
     return {
-        data: users,
+        data: data,
         meta: {
             total: totalUsers
         }
