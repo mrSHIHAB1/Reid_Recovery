@@ -3,6 +3,8 @@ import AppError from "../../errorHelpers/AppError";
 import httpStatus from "http-status-codes";
 import { extractTextFromImageBuffer } from "../../utils/vision";
 import { parseTruckFromOcrText } from "./truck.parser";
+import { NotificationType } from "../notification/notification.interface";
+import { Notification } from "../notification/notification.model";
 
 const TRUCK_IMAGES = [
   "https://drive.google.com/uc?export=view&id=1UoqoKpRa3bogs88HB3rIl0BmfdVoUT8g",
@@ -10,26 +12,43 @@ const TRUCK_IMAGES = [
   "https://drive.google.com/uc?export=view&id=1PHuXzzPKglJRBeVXurxlpC-d2kqxKNYn"
 ];
 
-const createTruck = async (payload: ITruck,driverId: string) => {
- const { ticket, date: dateString, truckNo, yardage } = payload;
+const createTruck = async (payload: ITruck, driverId: string) => {
+  const { ticket, date: dateString, truckNo, yardage } = payload;
+  //  const yardageNum = Number(yardage);
+  //  if (isNaN(yardageNum)) {
+  //    throw new AppError(httpStatus.BAD_REQUEST, "Yardage must be a number");
+  //  }
 
-    // Convert frontend date string to JS Date
-    const parsedDate = new Date(dateString);
-    if (isNaN(parsedDate.getTime())) {
-      throw new AppError(httpStatus.BAD_REQUEST, "Invalid date format");
-    }
- const photo = TRUCK_IMAGES[Math.floor(Math.random() * TRUCK_IMAGES.length)];
+  // Convert frontend date string to JS Date
+  const parsedDate = new Date(dateString);
+  if (isNaN(parsedDate.getTime())) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid date format");
+  }
+  const photo = TRUCK_IMAGES[Math.floor(Math.random() * TRUCK_IMAGES.length)];
 
-    const truck = await Truck.create({
-      ticket,
-      date: dateString,
-      truckNo,
-      yardage,
-      photo,
-      driver: driverId
-    });
+  const truck = await Truck.create({
+    ticket,
+    date: dateString,
+    truckNo,
+    yardage,
+    photo,
+    driver: driverId
+  });
 
-    return truck;
+
+  const Notificationpayload = {
+    user: truck.driver, // ID of the user receiving the notification
+    type: NotificationType.SYSTEM, // Type of notification from your enum
+    title: "New Ticket Added!",       // Notification title
+    body: "A user just scanned a new ticket.", // Notification body
+    receiverIds: [truck.driver],
+
+    isRead: false, // Defaults to false, optional
+  };
+  await Notification.create(Notificationpayload);
+
+
+  return truck;
 };
 
 const updateTruck = async (id: string, payload: Partial<ITruck>) => {

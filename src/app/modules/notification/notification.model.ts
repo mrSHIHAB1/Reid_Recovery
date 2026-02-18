@@ -15,6 +15,7 @@ const notificationSchema = new Schema<INotification>(
       required: true,
       index: true,
     },
+    receiverIds: [{ type: Schema.Types.ObjectId, ref: 'user' }],
     title: { type: String, required: true },
     body: { type: String, required: true },
     data: { type: Schema.Types.Mixed },

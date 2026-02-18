@@ -16,6 +16,7 @@ export interface INotification {
   type: NotificationType;
   title: string;
   body: string;
+  receiverIds?: Types.ObjectId[];
   data?: INotificationData;
   isRead: boolean;
   createdAt?: Date;

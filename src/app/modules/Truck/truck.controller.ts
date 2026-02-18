@@ -4,6 +4,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import { catchAsync } from "../../utils/catchAsync";
 import httpStatus from "http-status-codes";
 
+
 const createTruck = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.user.id; 
   console.log("Creating truck for user:", userId);
@@ -14,6 +15,10 @@ const createTruck = catchAsync(async (req: Request, res: Response, next: NextFun
     message: "Truck created successfully",
     data: truck,
   });
+
+
+
+
 });
 
 const updateTruck = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
