@@ -2,6 +2,20 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+interface GOOGLE_TYPE {
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  GOOGLE_CALLBACK_URL: string;
+}
+
+interface APPLE_AUTH_TYPE {
+  APPLE_CLIENT_ID: string;
+  APPLE_TEAM_ID: string;
+  APPLE_KEY_ID: string;
+  APPLE_PRIVATE_KEY_PATH: string;
+  APPLE_CALLBACK_URL: string;
+}
+
 interface EnvConfig {
   PORT: string;
   DB_URL: string;
@@ -41,6 +55,8 @@ interface EnvConfig {
   FIREBASE_SERVICE_ACCOUNT_PATH: string;
   GOOGLE_APPLICATION_CREDENTIALS: string;
   GOOGLE_CLOUD_VISSION_API_KEY:string;
+   GOOGLE_AUTH: GOOGLE_TYPE;
+  APPLE_AUTH: APPLE_AUTH_TYPE;
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -62,7 +78,15 @@ const loadEnvVariables = (): EnvConfig => {
     "SMTP_HOST_PORT",
     "FIREBASE_SERVICE_ACCOUNT_PATH",
     "GOOGLE_APPLICATION_CREDENTIALS",
-    "GOOGLE_CLOUD_VISSION_API_KEY"
+    "GOOGLE_CLOUD_VISSION_API_KEY",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "GOOGLE_CALLBACK_URL",
+      "APPLE_CLIENT_ID",
+    "APPLE_TEAM_ID",
+    "APPLE_KEY_ID",
+    "APPLE_PRIVATE_KEY_PATH",
+    "APPLE_CALLBACK_URL"
   ];
 
   requiredEnvVariables.forEach((key) => {
@@ -110,6 +134,18 @@ const loadEnvVariables = (): EnvConfig => {
     FIREBASE_SERVICE_ACCOUNT_PATH: process.env.FIREBASE_SERVICE_ACCOUNT_PATH as string,
     GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS as string,
     GOOGLE_CLOUD_VISSION_API_KEY: process .env.GOOGLE_CLOUD_VISSION_API_KEY as string,
+       GOOGLE_AUTH: {
+      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID as string,
+      GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as string,
+      GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL as string,
+    },
+    APPLE_AUTH: {
+      APPLE_CLIENT_ID: process.env.APPLE_CLIENT_ID as string,
+      APPLE_TEAM_ID: process.env.APPLE_TEAM_ID as string,
+      APPLE_KEY_ID: process.env.APPLE_KEY_ID as string,
+      APPLE_PRIVATE_KEY_PATH: process.env.APPLE_PRIVATE_KEY_PATH as string,
+      APPLE_CALLBACK_URL: process.env.APPLE_CALLBACK_URL as string,
+    },
   };
 };
 

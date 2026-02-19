@@ -5,6 +5,7 @@ import { extractTextFromImageBuffer } from "../../utils/vision";
 import { parseTruckFromOcrText } from "./truck.parser";
 import { NotificationType } from "../notification/notification.interface";
 import { Notification } from "../notification/notification.model";
+import mongoose from "mongoose";
 
 const TRUCK_IMAGES = [
   "https://drive.google.com/uc?export=view&id=1UoqoKpRa3bogs88HB3rIl0BmfdVoUT8g",
@@ -71,36 +72,45 @@ const getTruck = async (id: string) => {
   return truck;
 };
 
-const getAllTrucks = async (filters: { ticket?: string; date?: string; driverId?: string; driverName?: string; page?: number; limit?: number }) => {
+
+const getAllTrucks = async (filters: {
+  ticket?: string;
+  date?: string;
+  driverId?: string;
+  driverName?: string;
+  page?: number;
+  limit?: number;
+}) => {
   const { ticket, date, driverId, driverName, page = 1, limit = 10 } = filters;
 
   const query: any = {};
 
-  if (ticket) {
-    query.ticket = { $regex: ticket, $options: "i" }; // Case-insensitive search for ticket
+  // Ticket filter
+  if (ticket && ticket.trim() !== "") {
+    query.ticket = { $regex: ticket, $options: "i" };
   }
 
-  if (date) {
+  // Date filter
+  if (date && date.trim() !== "") {
     const parsedDate = new Date(date);
     if (!isNaN(parsedDate.getTime())) {
       query.date = parsedDate;
-    } else {
-      throw new AppError(httpStatus.BAD_REQUEST, "Invalid date format");
     }
   }
 
-  if (driverId) {
-    query.driver = driverId; // Exact match for driver ID
-  }
-
-  if (driverName) {
-    query["driver.name"] = { $regex: driverName, $options: "i" }; // Case-insensitive search for driver name
+  // Driver ID filter (only if valid)
+  if (
+    driverId &&
+    driverId.trim() !== "" &&
+    mongoose.Types.ObjectId.isValid(driverId)
+  ) {
+    query.driver = driverId;
   }
 
   const skip = (page - 1) * limit;
 
   const trucks = await Truck.find(query)
-    .populate({ path: "driver", select: "name" }) // Populate driver name from User model
+    .populate({ path: "driver", select: "name" })
     .skip(skip)
     .limit(limit);
 
@@ -113,6 +123,49 @@ const getAllTrucks = async (filters: { ticket?: string; date?: string; driverId?
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+const getUserAllTrucks = async (  filters: { ticket?: string; date?: string },userId: string) => {
+  const { ticket, date } = filters;
+
+  const query: any = {
+    driver: userId, 
+  };
+
+  if (ticket) {
+    query.ticket = { $regex: ticket, $options: "i" };
+  }
+
+  if (date) {
+    const parsedDate = new Date(date);
+
+    if (isNaN(parsedDate.getTime())) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Invalid date format");
+    }
+
+    const startOfDay = new Date(parsedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(parsedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    query.date = {
+      $gte: startOfDay,
+      $lte: endOfDay,
+    };
+  }
+
+  const trucks = await Truck.find(query)
+    .populate({ path: "driver", select: "name" });
+
+  const total = await Truck.countDocuments(query);
+
+  return {
+    data: trucks,
+    meta: {
+      total,
     },
   };
 };
@@ -155,7 +208,8 @@ export const TruckService = {
   createTruck,
   updateTruck,
   getTruck,
-  getAllTrucks,
+ getAllTrucks,
+  getUserAllTrucks,
   deleteTruck,
   // createTruckFromImage,
   getTicketsByDriver,

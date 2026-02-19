@@ -3,10 +3,14 @@ import { TruckService } from "./truck.service";
 import { sendResponse } from "../../utils/sendResponse";
 import { catchAsync } from "../../utils/catchAsync";
 import httpStatus from "http-status-codes";
+import { Truck } from "./truck.model";
+import AppError from "../../errorHelpers/AppError";
+import { User } from "../user/user.model";
+import mongoose from "mongoose";
 
 
 const createTruck = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.user.id; 
+  const userId = req.user.id ; 
   console.log("Creating truck for user:", userId);
   const truck = await TruckService.createTruck(req.body,userId);
   sendResponse(res, {
@@ -45,19 +49,17 @@ const getTruck = catchAsync(async (req: Request, res: Response, next: NextFuncti
   });
 });
 
-const getAllTrucks = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const { ticket, date, driverId, driverName, page, limit } = req.query;
+
+const getUserAllTrucks = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.user.id; // Extract logged-in user's ID
+  const { ticket, date} = req.query;
 
   const filters = {
     ticket: ticket as string,
-    date: date as string,
-    driverId: driverId as string,
-    driverName: driverName as string,
-    page: page ? parseInt(page as string, 10) : undefined,
-    limit: limit ? parseInt(limit as string, 10) : undefined,
+    date: date as string
   };
 
-  const result = await TruckService.getAllTrucks(filters);
+  const result = await TruckService.getUserAllTrucks(filters, userId);
 
   sendResponse(res, {
     success: true,
@@ -111,8 +113,8 @@ export const TruckController = {
   createTruck,
   updateTruck,
   getTruck,
-  getAllTrucks,
   deleteTruck,
+  getUserAllTrucks ,
   // createTruckFromImage,
   getMyTickets,
 };

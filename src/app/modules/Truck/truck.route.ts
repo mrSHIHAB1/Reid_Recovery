@@ -9,7 +9,8 @@ const router = express.Router();
 router.post("/create",checkAuth(Role.DRIVER), TruckController.createTruck);
 router.patch("/update/:id", TruckController.updateTruck);
 router.get("/:id", TruckController.getTruck);
-router.get("/", TruckController.getAllTrucks); // Updated to support filtering and pagination
+router.get("/",checkAuth(Role.DRIVER), TruckController.getUserAllTrucks); 
+// router.get("/all", TruckController.getAllTrucks);// Updated to support filtering and pagination
 router.delete("/:id", TruckController.deleteTruck);
 // router.post(
 //   "/create-from-image",
