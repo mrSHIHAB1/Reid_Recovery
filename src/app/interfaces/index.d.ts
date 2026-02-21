@@ -1,4 +1,4 @@
-const email = req.user.email;import { JwtPayload } from "jsonwebtoken";
+const email = req.user.email; import { JwtPayload } from "jsonwebtoken";
 
 
 declare global {

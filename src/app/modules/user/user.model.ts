@@ -1,15 +1,16 @@
 // models/User.ts
 import mongoose, { Schema, model, Types, Document } from "mongoose";
-import { IUser, IsActive, Role } from "./user.interface";
+import { IUser, IsActive, Role, AuthProviderType } from "./user.interface";
 
 
 const UserSchema: Schema<IUser> = new Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String ,required:true}, // optionaluired: true },
+    password: { type: String, required: false },
     picture: { type: String },
     address: { type: String },
+    phone: { type: String, required: false },
     isDeleted: { type: Boolean, default: false },
     isActive: {
       type: String,
@@ -29,6 +30,15 @@ const UserSchema: Schema<IUser> = new Schema(
       default: [],
     },
     reciveNotifications: { type: Boolean, default: true },
+    auth_providers: [
+      {
+        provider: {
+          type: String,
+          enum: Object.values(AuthProviderType),
+        },
+        providerID: { type: String },
+      },
+    ],
   },
   {
     timestamps: true, // automatically adds createdAt and updatedAt

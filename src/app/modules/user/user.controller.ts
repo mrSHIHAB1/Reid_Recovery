@@ -126,7 +126,7 @@ const deleteUser = catchAsync(async (req: Request, res: Response, next: NextFunc
 
 const updateUser = catchAsync(async (req: Request, res: Response) => {
 
-  const id = req.user.id;
+  const id = (req.user as any)?.id;
   console.log("User ID from token:", id);
   let payload = {};
 

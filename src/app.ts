@@ -9,10 +9,10 @@ import notFound from './app/middlewares/notFound';
 import router from './app/routes';
 import { RedisStore } from "connect-redis";
 import { redisClient } from './app/config/redis.config';
-import  './app/config/firebase.config';
-// import passport from 'passport';
-// import './app/config/passport.config';
-const app=express();
+import './app/config/firebase.config';
+import passport from 'passport';
+import './app/config/passport.config';
+const app = express();
 
 app.use(
     expressSession({
@@ -22,21 +22,21 @@ app.use(
         saveUninitialized: false,
     })
 );
-// app.use(passport.initialize());
-// app.use(passport.session());
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin:['http://localhost:3000', 'https://meet-my-guide-frontend.vercel.app'],
-    credentials:true,
+    origin: ['http://localhost:3000', 'https://meet-my-guide-frontend.vercel.app'],
+    credentials: true,
 }))
 
-app.use("/api/v1",router)
-app.get('/',(req:Request,res:Response)=>{
+app.use("/api/v1", router)
+app.get('/', (req: Request, res: Response) => {
     res.status(200).json({
-        message:"GUIDE"
+        message: "Reid Recovery"
     })
 })
 

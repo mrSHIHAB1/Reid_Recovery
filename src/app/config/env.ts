@@ -57,6 +57,7 @@ interface EnvConfig {
   GOOGLE_CLOUD_VISSION_API_KEY:string;
    GOOGLE_AUTH: GOOGLE_TYPE;
   APPLE_AUTH: APPLE_AUTH_TYPE;
+  FRONTEND_URL: string;
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -86,7 +87,8 @@ const loadEnvVariables = (): EnvConfig => {
     "APPLE_TEAM_ID",
     "APPLE_KEY_ID",
     "APPLE_PRIVATE_KEY_PATH",
-    "APPLE_CALLBACK_URL"
+    "APPLE_CALLBACK_URL",
+    "FRONTEND_URL"
   ];
 
   requiredEnvVariables.forEach((key) => {
@@ -146,6 +148,7 @@ const loadEnvVariables = (): EnvConfig => {
       APPLE_PRIVATE_KEY_PATH: process.env.APPLE_PRIVATE_KEY_PATH as string,
       APPLE_CALLBACK_URL: process.env.APPLE_CALLBACK_URL as string,
     },
+    FRONTEND_URL: process.env.FRONTEND_URL as string,
   };
 };
 

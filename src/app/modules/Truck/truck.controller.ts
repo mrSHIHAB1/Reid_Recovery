@@ -10,9 +10,9 @@ import mongoose from "mongoose";
 
 
 const createTruck = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.user.id ; 
+  const userId = (req.user as any)?.id;
   console.log("Creating truck for user:", userId);
-  const truck = await TruckService.createTruck(req.body,userId);
+  const truck = await TruckService.createTruck(req.body, userId);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
@@ -51,8 +51,8 @@ const getTruck = catchAsync(async (req: Request, res: Response, next: NextFuncti
 
 
 const getUserAllTrucks = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.user.id; // Extract logged-in user's ID
-  const { ticket, date} = req.query;
+  const userId = (req.user as any)?.id;// Extract logged-in user's ID
+  const { ticket, date } = req.query;
 
   const filters = {
     ticket: ticket as string,
@@ -98,7 +98,7 @@ const deleteTruck = catchAsync(async (req: Request, res: Response, next: NextFun
 // });
 
 const getMyTickets = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.user.id; // Extract logged-in user's ID
+  const userId = (req.user as any)?.id;// Extract logged-in user's ID
   const result = await TruckService.getTicketsByDriver(userId);
 
   sendResponse(res, {
@@ -114,7 +114,7 @@ export const TruckController = {
   updateTruck,
   getTruck,
   deleteTruck,
-  getUserAllTrucks ,
+  getUserAllTrucks,
   // createTruckFromImage,
   getMyTickets,
 };
